@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0:11434
+    command: serve
+
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=bi_database
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  bi_agent:
+    build: .
+    depends_on:
+      - ollama
+      - postgres
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - OLLAMA_MODEL=llama3
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/bi_database
+    volumes:
+      - .:/app
+
+volumes:
+  ollama_data:
+  postgres_data:
